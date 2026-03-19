@@ -6,6 +6,7 @@
 
 - `server/`: Node.js 后端服务，负责转发小程序请求到本地 Ollama 接口。
 - `miniprogram/`: 微信小程序前端，提供聊天界面和流式响应处理。
+- `test/`: 包含一个 `index.html` 文件，用于在浏览器中直接测试后端服务。
 
 ## 前置要求
 
@@ -67,6 +68,14 @@ node server.js
     ```
 3.  点击开发者工具的 **预览**，用手机微信扫码即可。
 
+### 5. Web 浏览器测试
+
+为了方便在电脑浏览器中直接测试后端服务，项目提供了一个简单的 Web 测试页面。
+
+1.  确保您的后端服务正在运行 (`node server.js`)。
+2.  用浏览器打开项目根目录下的 `test/index.html` 文件。
+3.  在输入框中输入消息并发送，即可与 Ollama 模型进行对话。
+
 ## 常见问题
 
 ### 1. `npm install` 失败
@@ -112,3 +121,13 @@ const response = await ollama.chat({
   messages: messages,
   stream: true,
 });
+
+## 版本控制
+
+本项目包含一个 `.gitignore` 文件，用于在版本控制中忽略不需要提交的文件和目录，例如：
+
+- `/node_modules/` 和 `/server/node_modules/`: 项目依赖，应在部署时通过 `npm install` 重新安装。
+- 敏感的环境变量文件（如 `.env`）。
+- IDE 或编辑器自动生成的配置。
+
+这有助于保持 Git 仓库的整洁和安全。
