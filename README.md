@@ -69,8 +69,31 @@ node server.js
 
 ## 常见问题
 
-### 1. 连接失败 / 请求超时
-- 检查后端服务是否正在运行 (`node server.js`)。
+### 1. `npm install` 失败
+如果您在 `server` 目录下执行 `npm install` 失败，请尝试以下步骤：
+
+**方法一：使用淘宝镜像源（推荐）**
+```bash
+npm install --registry=https://registry.npmmirror.com
+```
+
+**方法二：清理缓存并重试**
+如果方法一无效，请尝试删除 `package-lock.json` 和 `node_modules` 文件夹，清理缓存后重新安装：
+```bash
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install --registry=https://registry.npmmirror.com
+```
+
+**方法三：使用 cnpm**
+如果以上方法都失败，可以尝试安装 `cnpm`：
+```bash
+npm install -g cnpm --registry=https://registry.npmmirror.com
+cnpm install
+```
+
+### 2. 连接失败 / 请求超时
+- 检查后端服务是否正在运行 (`npm start` 或 `node server.js`)。
 - 检查 Ollama 是否正在运行 (`ollama serve`)。
 - 检查微信开发者工具中是否勾选了“不校验合法域名”。
 - 如果是真机调试，请确保防火墙允许 3000 端口访问，且手机电脑在同一 Wi-Fi。
