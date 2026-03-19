@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Web Test</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f9; }
+        h1 { text-align: center; color: #333; }
+        #chat-container { border: 1px solid #ccc; padding: 15px; height: 500px; overflow-y: scroll; margin-bottom: 15px; background-color: #fff; border-radius: 8px; }
+        #input-area { display: flex; }
+        #message-input { flex-grow: 1; border: 1px solid #ccc; padding: 10px; border-radius: 8px 0 0 8px; }
+        #send-button { border: 1px solid #007bff; background-color: #007bff; color: white; padding: 10px 15px; cursor: pointer; border-radius: 0 8px 8px 0; }
+        #send-button:hover { background-color: #0056b3; }
+        .message { margin-bottom: 12px; padding: 8px 12px; border-radius: 12px; max-width: 80%; line-height: 1.4; }
+        .user-message { background-color: #007bff; color: white; margin-left: auto; }
+        .assistant-message { background-color: #e9e9eb; color: #333; margin-right: auto; }
+        .error-message { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Ollama Web Test</h1>
+    <div id="chat-container"></div>
+    <div id="input-area">
+        <input type="text" id="message-input" placeholder="输入消息...">
+        <button id="send-button">发送</button>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        let history = [];
+
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            appendMessage('user', message);
+            messageInput.value = '';
+            
+            history.push({ role: 'user', content: message });
+
+            try {
+                const response = await fetch('http://localhost:3000/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        history: history.slice(0, -1) // 发送除当前消息外的历史记录
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let assistantMessage = '';
+                let assistantDiv = appendMessage('assistant', '...');
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        break;
+                    }
+                    const chunk = decoder.decode(value, { stream: true });
+                    assistantMessage += chunk;
+                    assistantDiv.textContent = assistantMessage;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+                
+                history.push({ role: 'assistant', content: assistantMessage });
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                appendMessage('error', `错误: ${error.message}`);
+            }
+        }
+
+        function appendMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            if (role === 'user') {
+                messageDiv.classList.add('user-message');
+            } else if (role === 'assistant') {
+                messageDiv.classList.add('assistant-message');
+            } else {
+                messageDiv.classList.add('error-message');
+            }
+            messageDiv.textContent = content;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return messageDiv;
+        }
+    </script>
+</body>
+</html>
